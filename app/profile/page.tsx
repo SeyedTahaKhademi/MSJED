@@ -4,6 +4,7 @@ import { getCurrentUser, logout, registerUser, loginUser, setActiveMosque } from
 import { readJSON, writeJSON } from "../lib/json";
 import fs from "fs/promises";
 import path from "path";
+import { redirect } from "next/navigation";
 
 type Mosque = { id: string; name: string; address?: string; logo?: string; admins?: string[]; members?: string[] };
 const MOSQUES_PATH = "data/mosques.json";
@@ -51,12 +52,20 @@ export default async function ProfilePage({ searchParams }: { searchParams: Reco
 
   const doLogin = async (formData: FormData) => {
     "use server";
-    await loginUser(formData);
+    const result = await loginUser(formData);
+    if (!result.ok) {
+      return redirect(`/profile?message=${encodeURIComponent(result.message || "خطا در ورود")}`);
+    }
+    return redirect("/profile");
   };
 
   const doRegister = async (formData: FormData) => {
     "use server";
-    await registerUser(formData);
+    const result = await registerUser(formData);
+    if (!result.ok) {
+      return redirect(`/profile?message=${encodeURIComponent(result.message || "خطا در ثبت‌نام")}`);
+    }
+    return redirect("/profile?message=" + encodeURIComponent("ثبت‌نام با موفقیت انجام شد"));
   };
 
   const activate = async (id: string) => {
