@@ -1,5 +1,5 @@
 import { readJSON, writeJSON } from "../../lib/json";
-import { getCurrentUser, setActiveMosque } from "../../lib/auth";
+import { getCurrentUser, setActiveMosque, clearActiveMosque } from "../../lib/auth";
 import PageHeader from "../../components/PageHeader";
 import { redirect } from "next/navigation";
 
@@ -8,46 +8,53 @@ export const dynamic = "force-dynamic";
 type Mosque = { id: string; name: string; address?: string; logo?: string; admins?: string[]; members?: string[] };
 const MOSQUES_PATH = "data/mosques.json";
 
-export default async function MosqueDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+// Module-scope server actions to avoid inline action edge cases
+async function joinAction(id: string) {
+  "use server";
+  const me = await getCurrentUser();
+  if (!me) {
+    redirect(`/profile?message=${encodeURIComponent("ابتدا وارد شوید")}`);
+  }
+  const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
+  const m = list.find((x) => x.id === id);
+  if (!m) {
+    redirect(`/explore?message=${encodeURIComponent("مسجد یافت نشد")}`);
+  }
+  m.members = Array.from(new Set([...(m.members || []), me.id]));
+  await writeJSON(MOSQUES_PATH, list);
+  await setActiveMosque(id);
+  redirect(`/mosques/${id}?message=${encodeURIComponent("عضویت موفق")}`);
+}
+
+async function leaveAction(id: string) {
+  "use server";
+  const me = await getCurrentUser();
+  if (!me) {
+    redirect(`/profile?message=${encodeURIComponent("ابتدا وارد شوید")}`);
+  }
+  const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
+  const m = list.find((x) => x.id === id);
+  if (!m) {
+    redirect(`/mosques/${id}?message=${encodeURIComponent("مسجد یافت نشد")}`);
+  }
+  m.members = (m.members || []).filter((x) => x !== me.id);
+  await writeJSON(MOSQUES_PATH, list);
+  await clearActiveMosque();
+  redirect("/profile?message=خروج موفق");
+}
+
+export default async function MosqueDetail({ params, searchParams }: { params: { id: string }; searchParams?: { message?: string } }) {
+  const { id } = params;
   const me = await getCurrentUser();
   const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
   const mosque = list.find((m) => m.id === id);
 
-  const join = async () => {
-    "use server";
-    const me = await getCurrentUser();
-    if (!me) return;
-    const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
-    const m = list.find((x) => x.id === id);
-    if (!m) return;
-    m.members = Array.from(new Set([...(m.members||[]), me.id]));
-    await writeJSON(MOSQUES_PATH, list);
-    await setActiveMosque(id);
-    return redirect("/profile?message=عضویت موفق");
-  };
+  const join = joinAction.bind(null, id);
 
-  const leave = async () => {
-    "use server";
-    const me = await getCurrentUser();
-    if (!me) return;
-    const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
-    const m = list.find((x) => x.id === id);
-    if (!m) return;
-    m.members = (m.members||[]).filter((x) => x !== me.id);
-    await writeJSON(MOSQUES_PATH, list);
-    return redirect("/profile?message=خروج موفق");
-  };
+  const leave = leaveAction.bind(null, id);
 
   if (!mosque) {
-    return (
-      <main className="mx-auto max-w-3xl pb-24">
-        <PageHeader title="مسجد" />
-        <section className="px-4 py-6">
-          <p className="text-neutral-600">مسجدی یافت نشد.</p>
-        </section>
-      </main>
-    );
+    redirect(`/explore?message=${encodeURIComponent("مسجد یافت نشد")}`);
   }
 
   const isMember = me ? (mosque.members||[]).includes(me.id) : false;
@@ -57,11 +64,20 @@ export default async function MosqueDetail({ params }: { params: Promise<{ id: s
   return (
     <main className="mx-auto max-w-3xl pb-24">
       <PageHeader title={mosque.name || "مسجد"} />
+      {searchParams?.message ? (
+        <div className="px-4 pt-4">
+          <div className="rounded-xl border border-[color:var(--secondary)]/30 bg-[color:var(--secondary)]/10 px-4 py-3 text-sm text-[color:var(--secondary)]">
+            {searchParams.message}
+          </div>
+        </div>
+      ) : null}
       <section className="px-4 py-6 space-y-4">
         <div className="flex items-center gap-3">
           <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-[color:var(--secondary)]/10">
-            {mosque.logo ? <img src={mosque.logo} alt="لوگو" className="h-14 w-14 object-cover"/> : (
-              <span className="text-sm font-medium text-[color:var(--secondary)]">مسجد</span>
+            {mosque.logo ? (
+              <img src={mosque.logo} alt="لوگو" className="h-14 w-14 object-cover"/>
+            ) : (
+              <img src="/logo/photo22144107936.jpg" alt="لوگوی مسجد ما" className="h-12 w-12 object-contain opacity-90" />
             )}
           </div>
           <div>

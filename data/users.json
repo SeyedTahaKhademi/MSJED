@@ -1,0 +1,88 @@
+[
+  {
+    "id": "bhybadcp",
+    "name": "امیر علی حاجی زاده",
+    "phone": "0912123456",
+    "role": "admin",
+    "passwordHash": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+    "mosques": [
+      "axnoa95w"
+    ]
+  },
+  {
+    "id": "1v5ngwpp",
+    "name": "sgdfgdgdfgf",
+    "phone": "09125621416",
+    "role": "member",
+    "passwordHash": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+    "mosques": [
+      "t736nz2m",
+      "axnoa95w"
+    ]
+  },
+  {
+    "id": "1t160go0",
+    "name": "محمد",
+    "phone": "09055583120",
+    "role": "admin",
+    "passwordHash": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+    "mosques": [
+      "axnoa95w"
+    ]
+  },
+  {
+    "id": "ja8qiihr",
+    "name": "sgdfgdgdfgf",
+    "phone": "02351687277",
+    "role": "admin",
+    "passwordHash": "6eb6cd07b3f29db80d24e79f51b93fd68aa4a706bd31a06a94081cc4d1e25b75",
+    "mosques": [
+      "t736nz2m"
+    ]
+  },
+  {
+    "id": "a0jnr192",
+    "name": "امیر حسین",
+    "phone": "09065658321",
+    "role": "member",
+    "passwordHash": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+    "mosques": [
+      "axnoa95w",
+      "t736nz2m"
+    ]
+  },
+  {
+    "id": "o65fh5sb",
+    "name": "سید طاها",
+    "phone": "056525056.5.55",
+    "role": "admin",
+    "passwordHash": "5df4fd5ee38c98a27b440521d3a32bc7a2b705597fc8e8de1f9af14761b964d5",
+    "mosques": [
+      "axnoa95w"
+    ]
+  },
+  {
+    "id": "rqjjknzu",
+    "name": "علیرضا چاری خوب",
+    "phone": "09036500943",
+    "role": "admin",
+    "passwordHash": "66a3cc4271a7ec0322a0cb0fcd8027ff3fc5c48dc3206298db0f3ba0ea94d688",
+    "mosques": []
+  },
+  {
+    "id": "v9twytmr",
+    "name": "سید طاها خادمی",
+    "phone": "09120000000",
+    "role": "admin",
+    "passwordHash": "6eb6cd07b3f29db80d24e79f51b93fd68aa4a706bd31a06a94081cc4d1e25b75",
+    "mosques": [
+      "axnoa95w",
+      "t736nz2m"
+    ]
+  },
+  {
+    "id": "e9c7t2ar",
+    "name": "سید طاها",
+    "mosques": []
+  }
+]

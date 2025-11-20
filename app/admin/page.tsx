@@ -39,8 +39,8 @@ function AddAnnouncement() {
     "use server";
     const file = path.join(process.cwd(), "data", "announcements.json");
     const raw = await fs.readFile(file, "utf-8").catch(() => "[]");
-    const items: any[] = JSON.parse(raw || "[]");
-    items.unshift({ id: uid(), title: String(formData.get("title")||""), date: String(formData.get("date")||""), description: String(formData.get("description")||"") });
+    const items = JSON.parse(raw || "[]") as Array<Record<string, unknown>>;
+    items.unshift({ id: uid(), title: String(formData.get("title")||""), date: String(formData.get("date")||""), description: String(formData.get("description")||"") } as Record<string, unknown>);
     await fs.writeFile(file, JSON.stringify(items, null, 2), "utf-8");
   };
   return (
@@ -58,8 +58,8 @@ function AnnouncementsList({ initialItems }: { initialItems: Array<{id:string; t
     "use server";
     const file = path.join(process.cwd(), "data", "announcements.json");
     const raw = await fs.readFile(file, "utf-8").catch(() => "[]");
-    const items: any[] = JSON.parse(raw || "[]");
-    const next = items.filter((x) => x.id !== id);
+    const items = JSON.parse(raw || "[]") as Array<Record<string, unknown>>;
+    const next = items.filter((x) => String(x.id ?? "") !== id);
     await fs.writeFile(file, JSON.stringify(next, null, 2), "utf-8");
   };
 

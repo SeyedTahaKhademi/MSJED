@@ -6,8 +6,13 @@ import { getOnboarded, getActiveMosqueId } from "./lib/auth";
 
 
 export const metadata: Metadata = {
-  title: "شبیکهون",
+  title: "مسجد ما",
   description: "سامانه مسجد - نسخه اولیه",
+  icons: {
+    icon: "/logo/photo22144107936.jpg",
+    shortcut: "/logo/photo22144107936.jpg",
+    apple: "/logo/photo22144107936.jpg",
+  },
 };
 
 export default async function RootLayout({

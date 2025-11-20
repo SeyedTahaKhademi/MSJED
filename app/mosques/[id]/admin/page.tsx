@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity, @typescript-eslint/no-explicit-any */
 import PageHeader from "../../../components/PageHeader";
 import { getCurrentUser } from "../../../lib/auth";
 import { readJSON, writeJSON } from "../../../lib/json";

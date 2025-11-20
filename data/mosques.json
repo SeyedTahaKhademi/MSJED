@@ -1,0 +1,54 @@
+[
+  {
+    "id": "axnoa95w",
+    "name": "مسجد الزهرا شهرک توحید",
+    "address": "تهران مهرآباد جنوبی آخر خیابان شمشیری شهرک توحید(شهرک شهید حاجی) بلوک 50 طبقه 4",
+    "logo": "",
+    "admins": [
+      "rqjjknzu"
+    ],
+    "members": [
+      "rqjjknzu",
+      "o65fh5sb",
+      "v9twytmr",
+      "1v5ngwpp",
+      "bhybadcp"
+    ]
+  },
+  {
+    "id": "t736nz2m",
+    "name": "مسجد الزهرا شهرک توحید",
+    "address": "تهران مهرآباد جنوبی آخر خیابان شمشیری شهرک توحید(شهرک شهید حاجی) بلوک 50 طبقه 4",
+    "logo": "/uploads/mosques/t736nz2m/logo-1763580457272.png",
+    "admins": [
+      "v9twytmr"
+    ],
+    "members": [
+      "v9twytmr",
+      "a0jnr192",
+      "ja8qiihr"
+    ],
+    "memberRoles": [
+      {
+        "userId": "ja8qiihr",
+        "role": "culture_admin"
+      },
+      {
+        "userId": "a0jnr192",
+        "role": "culture_admin"
+      }
+    ]
+  },
+  {
+    "id": "d3cmjc0c",
+    "name": "مسجد الزهرا شهرک توحید",
+    "address": "تهران مهرآباد جنوبی آخر خیابان شمشیری شهرک توحید(شهرک شهید حاجی) بلوک 50 طبقه 4",
+    "logo": "",
+    "admins": [
+      "e9c7t2ar"
+    ],
+    "members": [
+      "e9c7t2ar"
+    ]
+  }
+]
