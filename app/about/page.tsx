@@ -1,63 +1,32 @@
-import fs from "fs/promises";
 import PageHeader from "../components/PageHeader";
-import Link from "next/link";
-import { getActiveMosqueId, getCurrentUser } from "../lib/auth";
-import { ensureMosqueData, mosqueDataPath } from "../lib/mosque";
-import { readJSON } from "../lib/json";
 
-export const dynamic = "force-dynamic";
-
-type Mosque = { id: string; members?: string[] };
-
-export default async function AboutPage() {
-  const active = await getActiveMosqueId();
-  if (!active) {
-    return (
-      <main className="mx-auto max-w-3xl pb-24">
-        <PageHeader title="درباره مسجد" />
-        <section className="px-4 py-6">
-          <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
-            <p className="text-sm text-neutral-700">برای مشاهده اطلاعات مسجد، ابتدا ثبت‌نام/ورود کنید و مسجد خود را انتخاب کنید.</p>
-            <div className="mt-3 flex gap-2">
-              <Link href="/profile" className="rounded-lg bg-[color:var(--secondary)] px-3 py-1.5 text-xs font-medium text-white">ثبت‌نام / ورود</Link>
-              <Link href="/mosques" className="rounded-lg border border-[color:var(--secondary)] px-3 py-1.5 text-xs text-[color:var(--secondary)]">جست‌وجوی مسجد</Link>
-            </div>
-          </div>
-        </section>
-      </main>
-    );
-  }
-  const me = await getCurrentUser();
-  const mosques = await readJSON<Mosque[]>("data/mosques.json", []);
-  const m = mosques.find((x) => x.id === active);
-  const isMember = me && m ? (m.members || []).includes(me.id) : false;
-  if (!isMember) {
-    return (
-      <main className="mx-auto max-w-3xl pb-24">
-        <PageHeader title="درباره مسجد" />
-        <section className="px-4 py-6">
-          <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
-            <p className="text-sm text-neutral-700">شما عضو مسجد انتخاب‌شده نیستید. ابتدا عضو شوید.</p>
-            <div className="mt-3">
-              <Link href="/mosques" className="rounded-lg bg-[color:var(--secondary)] px-3 py-1.5 text-xs font-medium text-white">رفتن به مساجد</Link>
-            </div>
-          </div>
-        </section>
-      </main>
-    );
-  }
-  await ensureMosqueData(active);
-  const file = await mosqueDataPath(active, "about.json");
-  const raw = await fs.readFile(file, "utf-8").catch(() => "{}");
-  const data: { name?: string; description?: string; address?: string; phone?: string } = JSON.parse(raw || "{}");
+export default function AboutPage() {
   return (
     <main className="mx-auto max-w-3xl pb-24">
-      <PageHeader title="درباره مسجد" />
-      <section className="px-4 py-4 space-y-3">
-        <h2 className="text-lg font-semibold text-neutral-900">{data.name || "مسجد"}</h2>
-        {data.description ? <p className="text-sm leading-7 text-neutral-700">{data.description}</p> : null}
-        {data.address ? <p className="text-sm text-neutral-700">آدرس: {data.address}</p> : null}
-        {data.phone ? <p className="text-sm text-neutral-700">تلفن: {data.phone}</p> : null}
+      <PageHeader title="درباره ما" />
+      <section className="px-4 py-6">
+        <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm space-y-4">
+          <p className="text-sm leading-7 text-neutral-700">
+            این سامانه به عشق مسجد و خدمت به هیئت‌ها و کانون‌های مسجدی ساخته شده است؛
+            تلاشی کوچک برای اینکه برنامه‌ریزی، اطلاع‌رسانی و ارتباط با اهالی مسجد ساده‌تر و گرم‌تر شود.
+          </p>
+
+          <div className="space-y-1 text-sm text-neutral-800">
+            <p>این نسخه توسط <span className="font-semibold">تیم شهید حاجی‌زاده</span> طراحی و توسعه داده شده است.</p>
+            <p>
+              به دست
+              <span className="font-semibold"> سید طاها خادمی</span>
+              
+              با امید به اینکه قدمی هرچند کوچک در مسیر خدمت به مسجد و شهدا باشد.
+            </p>
+          </div>
+
+          <div className="mt-4 rounded-xl bg-neutral-50 border border-black/5 p-4 text-sm space-y-1">
+            <p className="text-xs font-semibold text-neutral-500">راه‌های ارتباطی</p>
+            <p className="text-neutral-700">شماره تماس: <span className="font-mono">09036500943</span></p>
+            <p className="text-neutral-700">ایمیل: <span className="font-mono">amncoder@gmail.com</span></p>
+          </div>
+        </div>
       </section>
     </main>
   );

@@ -2,14 +2,27 @@ import fs from "fs/promises";
 import path from "path";
 import { getActiveMosqueId } from "./auth";
 
+function isVercel() {
+  return process.env.VERCEL === "1";
+}
+
+function mosqueBaseDir(mosqueId: string) {
+  if (isVercel()) {
+    const base = process.env.TMPDIR || "/tmp";
+    return path.join(base, "msjed-data", "mosques", mosqueId);
+  }
+  return path.join(process.cwd(), "data", "mosques", mosqueId);
+}
+
 export async function mosqueDataPath(mosqueId: string, file: string) {
-  const p = path.join(process.cwd(), "data", "mosques", mosqueId, file);
+  const base = mosqueBaseDir(mosqueId);
+  const p = path.join(base, file);
   await fs.mkdir(path.dirname(p), { recursive: true });
   return p;
 }
 
 export async function ensureMosqueData(mosqueId: string) {
-  const base = path.join(process.cwd(), "data", "mosques", mosqueId);
+  const base = mosqueBaseDir(mosqueId);
   await fs.mkdir(base, { recursive: true });
   const defaults: Record<string, string> = {
     "announcements.json": "[]",
@@ -21,7 +34,12 @@ export async function ensureMosqueData(mosqueId: string) {
     "about.json": JSON.stringify({ name: "", description: "", address: "", phone: "" }),
   };
   for (const [file, content] of Object.entries(defaults)) {
-    try { await fs.access(path.join(base, file)); } catch { await fs.writeFile(path.join(base, file), content, "utf-8"); }
+    const target = path.join(base, file);
+    try {
+      await fs.access(target);
+    } catch {
+      await fs.writeFile(target, content, "utf-8");
+    }
   }
 }
 
