@@ -1,4 +1,3 @@
-import fs from "fs/promises";
 import PageHeader from "../components/PageHeader";
 import Link from "next/link";
 import { getActiveMosqueId, getCurrentUser } from "../lib/auth";
@@ -50,9 +49,8 @@ export default async function AnnouncementsPage() {
   }
 
   await ensureMosqueData(active);
-  const file = await mosqueDataPath(active, "announcements.json");
-  const raw = await fs.readFile(file, "utf-8").catch(() => "[]");
-  const items: Array<{ id: string; title: string; date?: string; description?: string }> = JSON.parse(raw || "[]");
+  const file = mosqueDataPath(active, "announcements.json");
+  const items = await readJSON<Array<{ id: string; title: string; date?: string; description?: string }>>(file, []);
 
   return (
     <main className="mx-auto max-w-3xl pb-24">

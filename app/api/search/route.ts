@@ -1,4 +1,3 @@
-import fs from "fs/promises";
 import { NextResponse } from "next/server";
 import { readJSON } from "../../../app/lib/json";
 import { ensureMosqueData, mosqueDataPath } from "../../../app/lib/mosque";
@@ -34,43 +33,34 @@ export async function GET(req: Request) {
 
     for (const spec of files) {
       await ensureMosqueData(m.id);
-      const fp = await mosqueDataPath(m.id, spec.file);
-      const raw = await fs.readFile(fp, "utf-8").catch(() => (spec.object ? "{}" : "[]"));
+      const fp = mosqueDataPath(m.id, spec.file);
       if (spec.object) {
-        try {
-          const obj = JSON.parse(raw || "{}") as Record<string, unknown>;
+        const obj = await readJSON<Record<string, unknown>>(fp, {});
+        const hay = spec.fields
+          .map((f) => String(obj[f as string] ?? "").toLowerCase())
+          .join(" ");
+        if (hay.includes(qLower)) {
+          push({
+            type: spec.type,
+            title: String((obj as any).name ?? m.name),
+            snippet: String((obj as any).description ?? (obj as any).address ?? (obj as any).phone ?? ""),
+            link: spec.link,
+          });
+        }
+      } else {
+        const arr = await readJSON<Array<Record<string, unknown>>>(fp, []);
+        for (const it of arr) {
           const hay = spec.fields
-            .map((f) => String(obj[f as string] ?? "").toLowerCase())
+            .map((f) => String(it[f as string] ?? "").toLowerCase())
             .join(" ");
           if (hay.includes(qLower)) {
             push({
               type: spec.type,
-              title: String((obj as any).name ?? m.name),
-              snippet: String((obj as any).description ?? (obj as any).address ?? (obj as any).phone ?? ""),
+              title: String((it as any).title ?? (it as any).question ?? m.name),
+              snippet: String((it as any).description ?? (it as any).answer ?? ""),
               link: spec.link,
             });
           }
-        } catch {
-          // ignore
-        }
-      } else {
-        try {
-          const arr = JSON.parse(raw || "[]") as Array<Record<string, unknown>>;
-          for (const it of arr) {
-            const hay = spec.fields
-              .map((f) => String(it[f as string] ?? "").toLowerCase())
-              .join(" ");
-            if (hay.includes(qLower)) {
-              push({
-                type: spec.type,
-                title: String((it as any).title ?? (it as any).question ?? m.name),
-                snippet: String((it as any).description ?? (it as any).answer ?? ""),
-                link: spec.link,
-              });
-            }
-          }
-        } catch {
-          // ignore
         }
       }
     }

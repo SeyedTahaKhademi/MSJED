@@ -3,8 +3,6 @@ import PageHeader from "../../../components/PageHeader";
 import { getCurrentUser } from "../../../lib/auth";
 import { readJSON, writeJSON } from "../../../lib/json";
 import { ensureMosqueData, mosqueDataPath } from "../../../lib/mosque";
-import fs from "fs/promises";
-import path from "path";
 import { revalidatePath } from "next/cache";
 
 type User = { id: string; name: string; phone?: string; role?: string };
@@ -35,24 +33,21 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
   const canManageFaq = isAdmin || myRole === "cleric";
   const hasAnyAccess = isAdmin || myRole === "culture_admin" || myRole === "magazine_admin" || myRole === "cleric";
   await ensureMosqueData(id);
-  const annPath = await mosqueDataPath(id, "announcements.json");
-  const annRaw = await fs.readFile(annPath, "utf-8").catch(() => "[]");
-  const announcements: Array<{ id: string; title: string; date?: string; description?: string }> = JSON.parse(annRaw || "[]");
+  const annPath = mosqueDataPath(id, "announcements.json");
+  const announcements = await readJSON<Array<{ id: string; title: string; date?: string; description?: string }>>(annPath, []);
   // other content
-  const culturePath = await mosqueDataPath(id, "culture.json");
-  const magazinePath = await mosqueDataPath(id, "magazine.json");
-  const faqPath = await mosqueDataPath(id, "faq.json");
-  const reportsPath = await mosqueDataPath(id, "reports.json");
-  const aboutPath = await mosqueDataPath(id, "about.json");
-  const photosPath = await mosqueDataPath(id, "photos.json");
-  const culture: Array<{ id: string; title: string; description?: string; time?: string; image?: string }> = JSON.parse(
-    await fs.readFile(culturePath, "utf-8").catch(() => "[]") || "[]"
-  );
-  const magazines: Array<{ id: string; title: string; link?: string }> = JSON.parse(await fs.readFile(magazinePath, "utf-8").catch(() => "[]") || "[]");
-  const faqs: Array<{ id: string; question: string; answer?: string }> = JSON.parse(await fs.readFile(faqPath, "utf-8").catch(() => "[]") || "[]");
-  const reports: Array<{ id: string; title: string; description?: string; date?: string }> = JSON.parse(await fs.readFile(reportsPath, "utf-8").catch(() => "[]") || "[]");
-  const about: { name?: string; description?: string; address?: string; phone?: string } = JSON.parse(await fs.readFile(aboutPath, "utf-8").catch(() => "{}") || "{}");
-  const photos: Array<{ id: string; url: string; caption?: string; likes?: string[] }> = JSON.parse(await fs.readFile(photosPath, "utf-8").catch(() => "[]") || "[]");
+  const culturePath = mosqueDataPath(id, "culture.json");
+  const magazinePath = mosqueDataPath(id, "magazine.json");
+  const faqPath = mosqueDataPath(id, "faq.json");
+  const reportsPath = mosqueDataPath(id, "reports.json");
+  const aboutPath = mosqueDataPath(id, "about.json");
+  const photosPath = mosqueDataPath(id, "photos.json");
+  const culture = await readJSON<Array<{ id: string; title: string; description?: string; time?: string; image?: string }>>(culturePath, []);
+  const magazines = await readJSON<Array<{ id: string; title: string; link?: string }>>(magazinePath, []);
+  const faqs = await readJSON<Array<{ id: string; question: string; answer?: string }>>(faqPath, []);
+  const reports = await readJSON<Array<{ id: string; title: string; description?: string; date?: string }>>(reportsPath, []);
+  const about = await readJSON<{ name?: string; description?: string; address?: string; phone?: string }>(aboutPath, { name: "", description: "", address: "", phone: "" });
+  const photos = await readJSON<Array<{ id: string; url: string; caption?: string; likes?: string[] }>>(photosPath, []);
   
   // بخش اعضا
   const USERS_PATH = "data/users.json";
@@ -104,12 +99,11 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const date = String(formData.get("date") || "").trim();
     const description = String(formData.get("description") || "").trim();
     if (!title) return;
-    const annPath = await mosqueDataPath(id, "announcements.json");
-    const raw = await fs.readFile(annPath, "utf-8").catch(() => "[]");
-    const items: any[] = JSON.parse(raw || "[]");
+    const annPath = mosqueDataPath(id, "announcements.json");
+    const items = await readJSON<any[]>(annPath, []);
     const uid = Math.random().toString(36).slice(2, 10);
     items.unshift({ id: uid, title, date, description });
-    await fs.writeFile(annPath, JSON.stringify(items, null, 2), "utf-8");
+    await writeJSON(annPath, items);
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -119,11 +113,10 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
     const m = list.find((x) => x.id === id);
     if (!me || !m || !(m.admins || []).includes(me.id)) return;
-    const annPath = await mosqueDataPath(id, "announcements.json");
-    const raw = await fs.readFile(annPath, "utf-8").catch(() => "[]");
-    const items: any[] = JSON.parse(raw || "[]");
+    const annPath = mosqueDataPath(id, "announcements.json");
+    const items = await readJSON<any[]>(annPath, []);
     const next = items.filter((x) => x.id !== idToRemove);
-    await fs.writeFile(annPath, JSON.stringify(next, null, 2), "utf-8");
+    await writeJSON(annPath, next);
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -160,11 +153,10 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
         imageUrl = "";
       }
     }
-    const p = await mosqueDataPath(id, "culture.json");
-    const raw = await fs.readFile(p, "utf-8").catch(() => "[]");
-    const items: any[] = JSON.parse(raw || "[]");
+    const p = mosqueDataPath(id, "culture.json");
+    const items = await readJSON<any[]>(p, []);
     items.unshift({ id: Math.random().toString(36).slice(2, 10), title, description, time, image: imageUrl });
-    await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
+    await writeJSON(p, items);
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -176,9 +168,9 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const role = m?.memberRoles?.find((r) => r.userId === me?.id)?.role;
     const isAdminHere = !!(me && m?.admins?.includes(me.id));
     if (!me || !m || !(isAdminHere || role === "culture_admin")) return;
-    const p = await mosqueDataPath(id, "culture.json");
-    const arr: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
-    await fs.writeFile(p, JSON.stringify(arr.filter((x) => x.id !== cid), null, 2), "utf-8");
+    const p = mosqueDataPath(id, "culture.json");
+    const arr = await readJSON<any[]>(p, []);
+    await writeJSON(p, arr.filter((x) => x.id !== cid));
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -193,10 +185,10 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const title = String(formData.get("title") || "").trim();
     const link = String(formData.get("link") || "").trim();
     if (!title) return;
-    const p = await mosqueDataPath(id, "magazine.json");
-    const items: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
+    const p = mosqueDataPath(id, "magazine.json");
+    const items = await readJSON<any[]>(p, []);
     items.unshift({ id: Math.random().toString(36).slice(2, 10), title, link });
-    await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
+    await writeJSON(p, items);
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -208,9 +200,9 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const role = m?.memberRoles?.find((r) => r.userId === me?.id)?.role;
     const isAdminHere = !!(me && m?.admins?.includes(me.id));
     if (!me || !m || !(isAdminHere || role === "magazine_admin")) return;
-    const p = await mosqueDataPath(id, "magazine.json");
-    const arr: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
-    await fs.writeFile(p, JSON.stringify(arr.filter((x) => x.id !== mid), null, 2), "utf-8");
+    const p = mosqueDataPath(id, "magazine.json");
+    const arr = await readJSON<any[]>(p, []);
+    await writeJSON(p, arr.filter((x) => x.id !== mid));
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -223,10 +215,10 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const question = String(formData.get("question") || "").trim();
     const answer = String(formData.get("answer") || "").trim();
     if (!question) return;
-    const p = await mosqueDataPath(id, "faq.json");
-    const items: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
+    const p = mosqueDataPath(id, "faq.json");
+    const items = await readJSON<any[]>(p, []);
     items.unshift({ id: Math.random().toString(36).slice(2, 10), question, answer });
-    await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
+    await writeJSON(p, items);
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -236,9 +228,9 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
     const m = list.find((x) => x.id === id);
     if (!me || !m || !(m.admins || []).includes(me.id)) return;
-    const p = await mosqueDataPath(id, "faq.json");
-    const arr: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
-    await fs.writeFile(p, JSON.stringify(arr.filter((x) => x.id !== fid), null, 2), "utf-8");
+    const p = mosqueDataPath(id, "faq.json");
+    const arr = await readJSON<any[]>(p, []);
+    await writeJSON(p, arr.filter((x) => x.id !== fid));
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -252,13 +244,12 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const isAdminHere = !!m.admins?.includes(me.id);
     if (!(isAdminHere || role === "cleric")) return;
     const answer = String(formData.get("answer") || "").trim();
-    const p = await mosqueDataPath(id, "faq.json");
-    const raw = await fs.readFile(p, "utf-8").catch(() => "[]");
-    const items: any[] = JSON.parse(raw || "[]");
+    const p = mosqueDataPath(id, "faq.json");
+    const items = await readJSON<any[]>(p, []);
     const item = items.find((x) => x.id === fid);
     if (!item) return;
     item.answer = answer;
-    await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
+    await writeJSON(p, items);
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -272,10 +263,10 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const date = String(formData.get("date") || "").trim();
     const description = String(formData.get("description") || "").trim();
     if (!title) return;
-    const p = await mosqueDataPath(id, "reports.json");
-    const items: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
+    const p = mosqueDataPath(id, "reports.json");
+    const items = await readJSON<any[]>(p, []);
     items.unshift({ id: Math.random().toString(36).slice(2, 10), title, date, description });
-    await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
+    await writeJSON(p, items);
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -285,9 +276,9 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
     const m = list.find((x) => x.id === id);
     if (!me || !m || !(m.admins || []).includes(me.id)) return;
-    const p = await mosqueDataPath(id, "reports.json");
-    const arr: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
-    await fs.writeFile(p, JSON.stringify(arr.filter((x) => x.id !== rid), null, 2), "utf-8");
+    const p = mosqueDataPath(id, "reports.json");
+    const arr = await readJSON<any[]>(p, []);
+    await writeJSON(p, arr.filter((x) => x.id !== rid));
     revalidatePath(`/mosques/${id}/admin`);
   };
 
@@ -301,8 +292,8 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const description = String(formData.get("description") || "");
     const address = String(formData.get("address") || "");
     const phone = String(formData.get("phone") || "");
-    const p = await mosqueDataPath(id, "about.json");
-    await fs.writeFile(p, JSON.stringify({ name, description, address, phone }, null, 2), "utf-8");
+    const p = mosqueDataPath(id, "about.json");
+    await writeJSON(p, { name, description, address, phone });
     m.name = name || m.name;
     m.address = address || m.address;
     await writeJSON(MOSQUES_PATH, list);
@@ -329,10 +320,10 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
       const data = await res.json().catch(() => null as any);
       if (!data || !data.ok || !data.url) return;
       const url = String(data.url);
-      const p = await mosqueDataPath(id, "photos.json");
-      const items: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
+      const p = mosqueDataPath(id, "photos.json");
+      const items = await readJSON<any[]>(p, []);
       items.unshift({ id: Math.random().toString(36).slice(2, 10), url, caption, likes: [] });
-      await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
+      await writeJSON(p, items);
       revalidatePath(`/mosques/${id}/admin`);
     } catch {
       // اگر آپلود روی هاست موفق نشود، عکس ثبت نمی‌شود تا پنل کرش نکند.
@@ -345,9 +336,9 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
     const m = list.find((x) => x.id === id);
     if (!me || !m || !(m.admins || []).includes(me.id)) return;
-    const p = await mosqueDataPath(id, "photos.json");
-    const arr: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
-    await fs.writeFile(p, JSON.stringify(arr.filter((x) => x.id !== pid), null, 2), "utf-8");
+    const p = mosqueDataPath(id, "photos.json");
+    const arr = await readJSON<any[]>(p, []);
+    await writeJSON(p, arr.filter((x) => x.id !== pid));
   };
 
   const makeAdmin = async (userId: string) => {

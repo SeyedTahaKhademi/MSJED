@@ -1,9 +1,8 @@
-import fs from "fs/promises";
 import PageHeader from "../components/PageHeader";
 import Link from "next/link";
 import { getActiveMosqueId, getCurrentUser } from "../lib/auth";
 import { ensureMosqueData, mosqueDataPath } from "../lib/mosque";
-import { readJSON } from "../lib/json";
+import { readJSON, writeJSON } from "../lib/json";
 
 export const dynamic = "force-dynamic";
 
@@ -47,9 +46,8 @@ export default async function FaqPage() {
     );
   }
   await ensureMosqueData(active);
-  const file = await mosqueDataPath(active, "faq.json");
-  const raw = await fs.readFile(file, "utf-8").catch(() => "[]");
-  const items: Array<{ id: string; question: string; answer?: string }> = JSON.parse(raw || "[]");
+  const file = mosqueDataPath(active, "faq.json");
+  const items = await readJSON<Array<{ id: string; question: string; answer?: string }>>(file, []);
 
   const askQuestion = async (formData: FormData) => {
     "use server";
@@ -64,12 +62,11 @@ export default async function FaqPage() {
     const question = String(formData.get("question") || "").trim();
     if (!question) return;
     await ensureMosqueData(activeMosque);
-    const p = await mosqueDataPath(activeMosque, "faq.json");
-    const rawFaq = await fs.readFile(p, "utf-8").catch(() => "[]");
-    const current: Array<{ id: string; question: string; answer?: string }> = JSON.parse(rawFaq || "[]");
+    const p = mosqueDataPath(activeMosque, "faq.json");
+    const current = await readJSON<Array<{ id: string; question: string; answer?: string }>>(p, []);
     const id = Math.random().toString(36).slice(2, 10);
     current.unshift({ id, question });
-    await fs.writeFile(p, JSON.stringify(current, null, 2), "utf-8");
+    await writeJSON(p, current);
   };
 
   const waitingCount = items.filter((it) => !it.answer).length;
