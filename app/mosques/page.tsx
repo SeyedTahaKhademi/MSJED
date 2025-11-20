@@ -33,7 +33,7 @@ export default async function MosquesPage({ searchParams }: { searchParams: { q?
     const u = users.find((x) => x.id === me.id);
     if (u) { u.mosques = Array.from(new Set([...(u.mosques||[]), id])); await writeJSON("data/users.json", users); }
 
-    redirect(`/mosques/${id}?message=${encodeURIComponent("عضویت موفق")}`);
+    redirect(`/successadding`);
   };
 
   return (
