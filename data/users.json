@@ -1,5 +1,41 @@
 [
   {
+    "id": "v0wsouvl",
+    "name": "علیرضا چاری خوب",
+    "phone": "09191212095",
+    "role": "admin",
+    "passwordHash": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+    "mosques": []
+  },
+  {
+    "id": "zc9t5wot",
+    "name": "سید طاها خادمی",
+    "phone": "09914930467",
+    "role": "member",
+    "passwordHash": "a44ae66d23f2466c6943d26351778eb88683c7220fa9692ee416dbfa82846d70",
+    "mosques": [
+      "ik39j3o3"
+    ]
+  },
+  {
+    "id": "xmfiefrd",
+    "name": "احسان محمدی",
+    "phone": "0324148418",
+    "role": "admin",
+    "passwordHash": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+    "mosques": []
+  },
+  {
+    "id": "v1k85lta",
+    "name": "حسین امامی",
+    "phone": "0911212315",
+    "role": "member",
+    "passwordHash": "15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225",
+    "mosques": [
+      "axnoa95w"
+    ]
+  },
+  {
     "id": "bhybadcp",
     "name": "امیر علی حاجی زاده",
     "phone": "0912123456",

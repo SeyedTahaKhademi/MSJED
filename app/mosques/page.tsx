@@ -1,6 +1,7 @@
 import PageHeader from "../components/PageHeader";
 import { readJSON, writeJSON } from "../lib/json";
 import { getCurrentUser, setActiveMosque } from "../lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,8 @@ export default async function MosquesPage({ searchParams }: { searchParams: { q?
     const users = await readJSON<any[]>("data/users.json", []);
     const u = users.find((x) => x.id === me.id);
     if (u) { u.mosques = Array.from(new Set([...(u.mosques||[]), id])); await writeJSON("data/users.json", users); }
+
+    redirect(`/mosques/${id}?message=${encodeURIComponent("عضویت موفق")}`);
   };
 
   return (

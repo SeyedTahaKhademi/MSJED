@@ -50,16 +50,55 @@ export default async function FaqPage() {
   const file = await mosqueDataPath(active, "faq.json");
   const raw = await fs.readFile(file, "utf-8").catch(() => "[]");
   const items: Array<{ id: string; question: string; answer?: string }> = JSON.parse(raw || "[]");
+
+  const askQuestion = async (formData: FormData) => {
+    "use server";
+    const activeMosque = await getActiveMosqueId();
+    if (!activeMosque) return;
+    const me = await getCurrentUser();
+    if (!me) return;
+    const mosques = await readJSON<Mosque[]>("data/mosques.json", []);
+    const m = mosques.find((x) => x.id === activeMosque);
+    const isMemberHere = me && m ? (m.members || []).includes(me.id) : false;
+    if (!isMemberHere) return;
+    const question = String(formData.get("question") || "").trim();
+    if (!question) return;
+    await ensureMosqueData(activeMosque);
+    const p = await mosqueDataPath(activeMosque, "faq.json");
+    const rawFaq = await fs.readFile(p, "utf-8").catch(() => "[]");
+    const current: Array<{ id: string; question: string; answer?: string }> = JSON.parse(rawFaq || "[]");
+    const id = Math.random().toString(36).slice(2, 10);
+    current.unshift({ id, question });
+    await fs.writeFile(p, JSON.stringify(current, null, 2), "utf-8");
+  };
   return (
     <main className="mx-auto max-w-3xl pb-24">
       <PageHeader title="سوالات شرعی" />
       <section className="px-4 py-4">
-        {items.length === 0 ? <p className="text-neutral-600">سوالی ثبت نشده است.</p> : (
+        <form action={askQuestion} className="mb-4 space-y-2 rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
+          <p className="text-sm font-medium text-neutral-900">ثبت سوال جدید</p>
+          <textarea
+            name="question"
+            required
+            placeholder="سوال شرعی خود را بنویسید..."
+            className="h-20 w-full rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)]"
+          />
+          <button className="w-full rounded-lg bg-[color:var(--secondary)] px-4 py-2 text-sm font-medium text-white">
+            ارسال سوال
+          </button>
+        </form>
+        {items.length === 0 ? (
+          <p className="text-neutral-600">سوالی ثبت نشده است.</p>
+        ) : (
           <ul className="space-y-3">
             {items.map((it) => (
               <li key={it.id} className="rounded-xl border border-black/5 bg-white p-4 shadow-sm">
                 <p className="text-sm font-medium text-neutral-900">س: {it.question}</p>
-                {it.answer ? <p className="mt-1 text-sm text-neutral-700">ج: {it.answer}</p> : null}
+                {it.answer ? (
+                  <p className="mt-1 text-sm text-neutral-700">ج: {it.answer}</p>
+                ) : (
+                  <p className="mt-1 text-xs text-neutral-500">در انتظار پاسخ روحانی...</p>
+                )}
               </li>
             ))}
           </ul>

@@ -2,6 +2,8 @@ import PageHeader from "../components/PageHeader";
 import OnboardingModal from "../components/OnboardingModal";
 import { getCurrentUser, logout, registerUser, loginUser, setActiveMosque } from "../lib/auth";
 import { readJSON, writeJSON } from "../lib/json";
+import fs from "fs/promises";
+import path from "path";
 
 type Mosque = { id: string; name: string; address?: string; logo?: string; admins?: string[]; members?: string[] };
 const MOSQUES_PATH = "data/mosques.json";
@@ -19,11 +21,25 @@ export default async function ProfilePage({ searchParams }: { searchParams: Reco
     if (me.role !== "admin") return;
     const name = String(formData.get("name")||"").trim();
     const address = String(formData.get("address")||"").trim();
-    const logo = String(formData.get("logo")||"").trim();
     if (!name) return;
     const id = Math.random().toString(36).slice(2,10);
     const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
-    list.unshift({ id, name, address, logo, admins: [me.id], members: [me.id] });
+
+    let logoPath = "";
+    const file = formData.get("logoFile") as File | null;
+    if (file && typeof file === "object" && "arrayBuffer" in file && (file as any).size > 0) {
+      const ab = await file.arrayBuffer();
+      const buf = Buffer.from(ab);
+      const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
+      await fs.mkdir(uploadsDir, { recursive: true });
+      const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
+      const filename = `logo-${Date.now()}${ext}`;
+      const dest = path.join(uploadsDir, filename);
+      await fs.writeFile(dest, buf);
+      logoPath = `/uploads/mosques/${id}/${filename}`;
+    }
+
+    list.unshift({ id, name, address, logo: logoPath, admins: [me.id], members: [me.id] });
     await writeJSON(MOSQUES_PATH, list);
     await setActiveMosque(id);
   };
@@ -100,11 +116,30 @@ export default async function ProfilePage({ searchParams }: { searchParams: Reco
         {me && me.role === "admin" ? (
           <div className="rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
             <h2 className="text-base font-semibold text-neutral-900">ساخت مسجد جدید</h2>
-            <form action={createMosque} className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <input name="name" required placeholder="نام مسجد" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)] sm:col-span-1" />
-              <input name="address" placeholder="آدرس" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)] sm:col-span-1" />
-              <input name="logo" placeholder="لوگوی مسجد (URL)" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)] sm:col-span-1" />
-              <button className="rounded-lg bg-[color:var(--secondary)] px-4 py-2 text-sm font-medium text-white sm:col-span-3">ایجاد مسجد</button>
+            <form
+              action={createMosque}
+              className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3"
+            >
+              <input
+                name="name"
+                required
+                placeholder="نام مسجد"
+                className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)] sm:col-span-1"
+              />
+              <input
+                name="address"
+                placeholder="آدرس"
+                className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)] sm:col-span-1"
+              />
+              <input
+                name="logoFile"
+                type="file"
+                accept="image/*"
+                className="rounded-lg border border-black/10 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-black/5 file:px-3 file:py-1.5 file:text-xs sm:col-span-1"
+              />
+              <button className="rounded-lg bg-[color:var(--secondary)] px-4 py-2 text-sm font-medium text-white sm:col-span-3">
+                ایجاد مسجد
+              </button>
             </form>
           </div>
         ) : me ? (

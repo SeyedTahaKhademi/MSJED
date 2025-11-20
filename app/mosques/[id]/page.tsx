@@ -18,7 +18,7 @@ async function joinAction(id: string) {
   const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
   const m = list.find((x) => x.id === id);
   if (!m) {
-    redirect(`/explore?message=${encodeURIComponent("مسجد یافت نشد")}`);
+    redirect(`/mosques?message=${encodeURIComponent("مسجد یافت نشد")}`);
   }
   m.members = Array.from(new Set([...(m.members || []), me.id]));
   await writeJSON(MOSQUES_PATH, list);
@@ -35,7 +35,7 @@ async function leaveAction(id: string) {
   const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
   const m = list.find((x) => x.id === id);
   if (!m) {
-    redirect(`/mosques/${id}?message=${encodeURIComponent("مسجد یافت نشد")}`);
+    redirect(`/mosques?message=${encodeURIComponent("مسجد یافت نشد")}`);
   }
   m.members = (m.members || []).filter((x) => x !== me.id);
   await writeJSON(MOSQUES_PATH, list);
@@ -54,7 +54,14 @@ export default async function MosqueDetail({ params, searchParams }: { params: {
   const leave = leaveAction.bind(null, id);
 
   if (!mosque) {
-    redirect(`/explore?message=${encodeURIComponent("مسجد یافت نشد")}`);
+    return (
+      <main className="mx-auto max-w-3xl pb-24">
+        <PageHeader title="مسجد" />
+        <section className="px-4 py-6">
+          <p className="text-neutral-600">مسجدی یافت نشد.</p>
+        </section>
+      </main>
+    );
   }
 
   const isMember = me ? (mosque.members||[]).includes(me.id) : false;

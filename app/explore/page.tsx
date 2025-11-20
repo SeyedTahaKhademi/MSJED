@@ -1,19 +1,16 @@
 import fs from "fs/promises";
 import PageHeader from "../components/PageHeader";
-import Link from "next/link";
 import { readJSON } from "../lib/json";
 import { ensureMosqueData, mosqueDataPath } from "../lib/mosque";
 import { getActiveMosqueId, getCurrentUser } from "../lib/auth";
+import SearchBox from "./SearchBox";
 
 export const dynamic = "force-dynamic";
 
 type Mosque = { id: string; name: string; address?: string; logo?: string; admins?: string[]; members?: string[] };
 type Photo = { id: string; url: string; caption?: string; likes?: string[]; mosqueId?: string };
 
-type SearchResult = { type: string; title: string; snippet?: string; link: string; mosqueId: string; mosqueName: string };
-
-export default async function ExplorePage({ searchParams }: { searchParams?: { q?: string } }) {
-  const q = (searchParams?.q || "").trim();
+export default async function ExplorePage() {
   const me = await getCurrentUser();
   const active = await getActiveMosqueId();
   const mosques = await readJSON<Mosque[]>("data/mosques.json", []);
@@ -32,48 +29,8 @@ export default async function ExplorePage({ searchParams }: { searchParams?: { q
       feed.push({ id: String(ph.id || ""), url, caption, likes, mosqueId: m.id });
     }
   }
-  const filteredFeed = active ? feed.filter((x) => x.mosqueId !== active) : feed;
   // simple latest-first ordering assuming newly added photos are appended; reverse for recency
-  const photos = filteredFeed.slice().reverse();
-
-  // Global search across mosque data
-  const results: SearchResult[] = [];
-  if (q) {
-    const qLower = q.toLowerCase();
-    for (const m of mosques) {
-      const push = (res: Omit<SearchResult, "mosqueId" | "mosqueName">) => results.push({ ...res, mosqueId: m.id, mosqueName: m.name });
-      if ((m.name || "").toLowerCase().includes(qLower) || (m.address || "").toLowerCase().includes(qLower)) {
-        push({ type: "mosque", title: m.name, snippet: m.address, link: `/mosques/${m.id}` });
-      }
-      const files: Array<{ file: string; type: string; link: string; fields: string[]; object?: boolean }> = [
-        { file: "announcements.json", type: "اعلان", link: "/announcements", fields: ["title", "description"] },
-        { file: "culture.json", type: "برنامه فرهنگی", link: "/culture", fields: ["title", "description"] },
-        { file: "magazine.json", type: "مجله", link: "/magazine", fields: ["title"] },
-        { file: "faq.json", type: "سوال", link: "/faq", fields: ["question", "answer"] },
-        { file: "reports.json", type: "گزارش", link: "/reports", fields: ["title", "description"] },
-        { file: "about.json", type: "درباره", link: "/about", fields: ["name", "description", "address", "phone"], object: true },
-      ];
-      for (const spec of files) {
-        const fp = await mosqueDataPath(m.id, spec.file);
-        const raw = await fs.readFile(fp, "utf-8").catch(() => (spec.object ? "{}" : "[]"));
-        if (spec.object) {
-          try {
-            const obj = JSON.parse(raw || "{}") as Record<string, unknown>;
-            const hay = spec.fields.map((f) => String(obj[f as string] ?? "").toLowerCase()).join(" ");
-            if (hay.includes(qLower)) push({ type: spec.type, title: String(obj.name ?? m.name), snippet: String(obj.description ?? obj.address ?? obj.phone ?? ""), link: spec.link });
-          } catch {}
-        } else {
-          try {
-            const arr = JSON.parse(raw || "[]") as Array<Record<string, unknown>>;
-            for (const it of arr) {
-              const hay = spec.fields.map((f) => String(it[f as string] ?? "").toLowerCase()).join(" ");
-              if (hay.includes(qLower)) push({ type: spec.type, title: String(it.title ?? it.question ?? m.name), snippet: String(it.description ?? it.answer ?? ""), link: spec.link });
-            }
-          } catch {}
-        }
-      }
-    }
-  }
+  const photos = feed.slice().reverse();
 
   const toggleLike = async (mosqueId: string, photoId: string) => {
     "use server";
@@ -97,36 +54,8 @@ export default async function ExplorePage({ searchParams }: { searchParams?: { q
     <main className="mx-auto max-w-3xl pb-24">
       <PageHeader title="اکسپلور" />
 
-      {/* Global search */}
-      <section className="px-4 pt-4">
-        <form className="rounded-2xl border border-black/5 bg-white p-3 shadow-sm" method="get">
-          <div className="flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" className="text-neutral-400" fill="none"><path d="m21 21-4.3-4.3M18 11.5A6.5 6.5 0 1 1 5 5a6.5 6.5 0 0 1 13 6.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
-            <input name="q" defaultValue={q} placeholder="جستجوی سراسری..." className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400" />
-            <button className="rounded-lg bg-[color:var(--secondary)] px-3 py-1.5 text-xs font-medium text-white">جستجو</button>
-          </div>
-        </form>
-        {q ? (
-          <div className="mt-3 rounded-2xl border border-black/5 bg-white p-3 shadow-sm">
-            <h3 className="text-sm font-semibold text-neutral-900">نتایج «{q}»</h3>
-            {results.length === 0 ? (
-              <p className="mt-2 text-xs text-neutral-600">چیزی پیدا نشد.</p>
-            ) : (
-              <ul className="mt-2 space-y-2">
-                {results.slice(0, 30).map((r, idx) => (
-                  <li key={idx} className="flex items-center justify-between rounded-lg border border-black/5 px-3 py-2">
-                    <div>
-                      <p className="text-sm font-medium text-neutral-900">{r.title} <span className="text-[10px] text-neutral-500">({r.type} • {r.mosqueName})</span></p>
-                      {r.snippet ? <p className="text-xs text-neutral-600">{r.snippet}</p> : null}
-                    </div>
-                            <Link href={r.link} className="text-xs text-[color:var(--secondary)]">مشاهده</Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ) : null}
-      </section>
+      {/* Global ajax search */}
+      <SearchBox />
 
       {/* Explore grid */}
       <section className="px-4 pt-4">

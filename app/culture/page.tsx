@@ -49,17 +49,33 @@ export default async function CulturePage() {
   await ensureMosqueData(active);
   const file = await mosqueDataPath(active, "culture.json");
   const raw = await fs.readFile(file, "utf-8").catch(() => "[]");
-  const items: Array<{ id: string; title: string; time?: string; description?: string }> = JSON.parse(raw || "[]");
+  const items: Array<{ id: string; title: string; time?: string; description?: string; image?: string }> = JSON.parse(raw || "[]");
   return (
     <main className="mx-auto max-w-3xl pb-24">
       <PageHeader title="برنامه فرهنگی" />
       <section className="px-4 py-4">
-        {items.length === 0 ? <p className="text-neutral-600">برنامه‌ای ثبت نشده است.</p> : (
+        {items.length === 0 ? (
+          <p className="text-neutral-600">برنامه‌ای ثبت نشده است.</p>
+        ) : (
           <ul className="space-y-3">
             {items.map((it) => (
-              <li key={it.id} className="rounded-xl border border-black/5 bg-white p-4 shadow-sm">
-                <h3 className="text-base font-semibold text-neutral-900">{it.title}</h3>
-                {it.description ? <p className="mt-1 text-sm text-neutral-700">{it.description}</p> : null}
+              <li key={it.id} className="flex gap-3 rounded-xl border border-black/5 bg-white p-4 shadow-sm">
+                {it.image ? (
+                  <img
+                    src={it.image}
+                    alt={it.title}
+                    className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
+                  />
+                ) : null}
+                <div>
+                  <h3 className="text-base font-semibold text-neutral-900">{it.title}</h3>
+                  {it.description ? (
+                    <p className="mt-1 text-sm text-neutral-700">{it.description}</p>
+                  ) : null}
+                  {it.time ? (
+                    <p className="mt-1 text-xs text-neutral-500">زمان: {it.time}</p>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>

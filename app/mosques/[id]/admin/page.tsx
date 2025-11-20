@@ -8,7 +8,7 @@ import path from "path";
 import { revalidatePath } from "next/cache";
 
 type User = { id: string; name: string; phone?: string; role?: string };
-type MemberRole = { userId: string; role: "admin" | "culture_admin" | "magazine_admin" | "member" };
+type MemberRole = { userId: string; role: "admin" | "culture_admin" | "magazine_admin" | "cleric" | "member" };
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +32,8 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
   const myRole = me && mosque ? (mosque.memberRoles || []).find((mr) => mr.userId === me.id)?.role : undefined;
   const canManageCulture = isAdmin || myRole === "culture_admin";
   const canManageMagazine = isAdmin || myRole === "magazine_admin";
-  const hasAnyAccess = isAdmin || myRole === "culture_admin" || myRole === "magazine_admin";
+  const canManageFaq = isAdmin || myRole === "cleric";
+  const hasAnyAccess = isAdmin || myRole === "culture_admin" || myRole === "magazine_admin" || myRole === "cleric";
   await ensureMosqueData(id);
   const annPath = await mosqueDataPath(id, "announcements.json");
   const annRaw = await fs.readFile(annPath, "utf-8").catch(() => "[]");
@@ -225,6 +226,26 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     revalidatePath(`/mosques/${id}/admin`);
   };
 
+  const answerFaq = async (fid: string, formData: FormData) => {
+    "use server";
+    const me = await getCurrentUser();
+    const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
+    const m = list.find((x) => x.id === id);
+    if (!me || !m) return;
+    const role = m.memberRoles?.find((r) => r.userId === me.id)?.role;
+    const isAdminHere = !!m.admins?.includes(me.id);
+    if (!(isAdminHere || role === "cleric")) return;
+    const answer = String(formData.get("answer") || "").trim();
+    const p = await mosqueDataPath(id, "faq.json");
+    const raw = await fs.readFile(p, "utf-8").catch(() => "[]");
+    const items: any[] = JSON.parse(raw || "[]");
+    const item = items.find((x) => x.id === fid);
+    if (!item) return;
+    item.answer = answer;
+    await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
+    revalidatePath(`/mosques/${id}/admin`);
+  };
+
   const addReport = async (formData: FormData) => {
     "use server";
     const me = await getCurrentUser();
@@ -329,7 +350,7 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     revalidatePath(`/mosques/${id}/admin`);
   };
 
-  const setMemberRole = async (userId: string, role: "admin" | "culture_admin" | "magazine_admin" | "member") => {
+  const setMemberRole = async (userId: string, role: "admin" | "culture_admin" | "magazine_admin" | "cleric" | "member") => {
     "use server";
     const me = await getCurrentUser();
     const list = await readJSON<Mosque[]>(MOSQUES_PATH, []);
@@ -395,7 +416,13 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
                   {members.map((member) => {
                     const isAdmin = (mosque?.admins || []).includes(member.id);
                     const memberRole = (mosque?.memberRoles || []).find(mr => mr.userId === member.id);
-                    const roleLabel = memberRole?.role === "culture_admin" ? "ادمین فرهنگی" : memberRole?.role === "magazine_admin" ? "ادمین مجله" : "عضو";
+                    const roleLabel = memberRole?.role === "culture_admin"
+                      ? "ادمین فرهنگی"
+                      : memberRole?.role === "magazine_admin"
+                      ? "ادمین مجله"
+                      : memberRole?.role === "cleric"
+                      ? "روحانی"
+                      : "عضو";
                     return (
                       <li key={member.id} className="flex items-center justify-between py-2">
                         <div>
@@ -411,6 +438,9 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
                               </form>
                               <form action={setMemberRole.bind(null, member.id, "magazine_admin")}>
                                 <button className="rounded-lg border border-orange-200 px-2 py-1 text-xs text-orange-600 hover:bg-orange-50">مجله</button>
+                              </form>
+                              <form action={setMemberRole.bind(null, member.id, "cleric")}>
+                                <button className="rounded-lg border border-green-200 px-2 py-1 text-xs text-green-600 hover:bg-green-50">روحانی</button>
                               </form>
                               <form action={makeAdmin.bind(null, member.id)}>
                                 <button className="rounded-lg border border-blue-200 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50">ادمین</button>
@@ -508,14 +538,9 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
           </div>
         )}
 
-        {isAdmin && (
+        {canManageFaq && (
           <div className="mt-6 rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
             <h3 className="text-sm font-semibold text-neutral-900">سوالات شرعی</h3>
-            <form action={addFaq} className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-4">
-              <input name="question" required placeholder="سؤال" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)] sm:col-span-2" />
-              <input name="answer" placeholder="پاسخ (اختیاری)" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)] sm:col-span-2" />
-              <button className="rounded-lg bg-[color:var(--secondary)] px-4 py-2 text-sm font-medium text-white">افزودن</button>
-            </form>
             <ul className="mt-3 divide-y divide-black/5">
               {faqs.map((it) => (
                 <li key={it.id} className="flex items-start justify-between py-3">
@@ -523,9 +548,22 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
                     <p className="text-sm font-medium text-neutral-900">{it.question}</p>
                     {it.answer ? <p className="text-xs text-neutral-600">{it.answer}</p> : null}
                   </div>
-                  <form action={removeFaq.bind(null, it.id)}>
-                    <button className="rounded-lg border border-red-200 px-3 py-1 text-xs text-red-600 hover:bg-red-50">حذف</button>
-                  </form>
+                  <div className="flex flex-col items-end gap-1">
+                    <form action={answerFaq.bind(null, it.id)} className="flex gap-1">
+                      <input
+                        name="answer"
+                        defaultValue={it.answer || ""}
+                        placeholder="پاسخ روحانی"
+                        className="w-40 rounded-lg border border-black/10 px-2 py-1 text-xs outline-none focus:border-[color:var(--secondary)]"
+                      />
+                      <button className="rounded-lg bg-[color:var(--secondary)] px-3 py-1 text-xs font-medium text-white">ثبت</button>
+                    </form>
+                    {isAdmin && (
+                      <form action={removeFaq.bind(null, it.id)}>
+                        <button className="rounded-lg border border-red-200 px-3 py-1 text-xs text-red-600 hover:bg-red-50">حذف</button>
+                      </form>
+                    )}
+                  </div>
                 </li>
               ))}
               {faqs.length === 0 ? <li className="py-3 text-xs text-neutral-600">سوالی ثبت نشده.</li> : null}

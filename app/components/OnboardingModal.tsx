@@ -18,9 +18,27 @@ export default function OnboardingModal({ showInitially = false }: { showInitial
           برای مشاهده محتوای مخصوص مسجد خود، ابتدا ثبت‌نام کنید و مسجدتان را جست‌وجو و انتخاب کنید. اگر مدیر مسجد هستید، با نقش مدیر ثبت‌نام کنید و اطلاعات مسجد (نام، آدرس، آواتار) را ثبت کنید.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Link href="/profile" className="rounded-lg bg-[color:var(--secondary)] px-4 py-2 text-sm font-medium text-white">ثبت‌نام / ورود</Link>
-          <Link href="/mosques" className="rounded-lg border border-[color:var(--secondary)] px-4 py-2 text-sm text-[color:var(--secondary)]">جست‌وجوی مسجد</Link>
-          <button onClick={() => setOpen(false)} className="rounded-lg border border-black/10 px-4 py-2 text-sm">متوجه شدم</button>
+          <Link
+            href="/profile"
+            onClick={() => setOpen(false)}
+            className="rounded-lg bg-[color:var(--secondary)] px-4 py-2 text-sm font-medium text-white"
+          >
+            ثبت‌نام / ورود
+          </Link>
+          <Link
+            href="/mosques"
+            onClick={() => setOpen(false)}
+            className="rounded-lg border border-[color:var(--secondary)] px-4 py-2 text-sm text-[color:var(--secondary)]"
+          >
+            جست‌وجوی مسجد
+          </Link>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="rounded-lg border border-black/10 px-4 py-2 text-sm"
+          >
+            متوجه شدم
+          </button>
         </div>
       </div>
     </div>
