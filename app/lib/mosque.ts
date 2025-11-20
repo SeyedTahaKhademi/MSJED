@@ -1,46 +1,16 @@
-import fs from "fs/promises";
-import path from "path";
 import { getActiveMosqueId } from "./auth";
 
-function isVercel() {
-  return process.env.VERCEL === "1";
+// برای داده‌های مسجد (اعلانات، فرهنگ، مجله، گزارش، عکس و ...) به‌جای مسیر دیسک
+// فقط یک مسیر منطقی زیر data/ برمی‌گردانیم تا readJSON/writeJSON آن را روی هاست cPanel مدیریت کنند.
+
+export function mosqueDataPath(mosqueId: string, file: string) {
+  return `data/mosques/${mosqueId}/${file}`;
 }
 
-function mosqueBaseDir(mosqueId: string) {
-  if (isVercel()) {
-    const base = process.env.TMPDIR || "/tmp";
-    return path.join(base, "msjed-data", "mosques", mosqueId);
-  }
-  return path.join(process.cwd(), "data", "mosques", mosqueId);
-}
-
-export async function mosqueDataPath(mosqueId: string, file: string) {
-  const base = mosqueBaseDir(mosqueId);
-  const p = path.join(base, file);
-  await fs.mkdir(path.dirname(p), { recursive: true });
-  return p;
-}
-
-export async function ensureMosqueData(mosqueId: string) {
-  const base = mosqueBaseDir(mosqueId);
-  await fs.mkdir(base, { recursive: true });
-  const defaults: Record<string, string> = {
-    "announcements.json": "[]",
-    "culture.json": "[]",
-    "magazine.json": "[]",
-    "faq.json": "[]",
-    "reports.json": "[]",
-    "photos.json": "[]",
-    "about.json": JSON.stringify({ name: "", description: "", address: "", phone: "" }),
-  };
-  for (const [file, content] of Object.entries(defaults)) {
-    const target = path.join(base, file);
-    try {
-      await fs.access(target);
-    } catch {
-      await fs.writeFile(target, content, "utf-8");
-    }
-  }
+// در معماری جدید، ایجاد فایل‌های پیش‌فرض به‌صورت تنبل و از طریق readJSON/writeJSON
+// انجام می‌شود، بنابراین این تابع فعلاً کار خاصی نمی‌کند و برای سازگاری نگه داشته شده است.
+export async function ensureMosqueData(_mosqueId: string) {
+  return;
 }
 
 export async function getActiveMosqueOrNull() {

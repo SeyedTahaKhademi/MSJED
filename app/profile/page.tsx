@@ -30,17 +30,20 @@ export default async function ProfilePage({ searchParams }: { searchParams: Reco
     const file = formData.get("logoFile") as File | null;
     if (file && typeof file === "object" && "arrayBuffer" in file && (file as any).size > 0) {
       try {
-        const ab = await file.arrayBuffer();
-        const buf = Buffer.from(ab);
-        const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
-        await fs.mkdir(uploadsDir, { recursive: true });
-        const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
-        const filename = `logo-${Date.now()}${ext}`;
-        const dest = path.join(uploadsDir, filename);
-        await fs.writeFile(dest, buf);
-        logoPath = `/uploads/mosques/${id}/${filename}`;
+        const uploadEndpoint = process.env.REMOTE_UPLOAD_ENDPOINT || "https://hooshamoozan.ir/msjed/upload.php";
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch(`${uploadEndpoint}?type=mosques&mosque=${encodeURIComponent(id)}&field=file`, {
+          method: "POST",
+          body: fd,
+        });
+        if (res.ok) {
+          const data = await res.json().catch(() => null as any);
+          if (data && data.ok && data.url) {
+            logoPath = String(data.url);
+          }
+        }
       } catch {
-        // روی محیط‌های فقط‌خواندنی (مثل Vercel) اگر نوشتن در public/uploads مجاز نباشد، فقط لوگو تنظیم نمی‌شود.
         logoPath = "";
       }
     }

@@ -1,4 +1,3 @@
-import fs from "fs/promises";
 import PageHeader from "../components/PageHeader";
 import Link from "next/link";
 import { getActiveMosqueId, getCurrentUser } from "../lib/auth";
@@ -47,9 +46,8 @@ export default async function CulturePage() {
     );
   }
   await ensureMosqueData(active);
-  const file = await mosqueDataPath(active, "culture.json");
-  const raw = await fs.readFile(file, "utf-8").catch(() => "[]");
-  const items: Array<{ id: string; title: string; time?: string; description?: string; image?: string }> = JSON.parse(raw || "[]");
+  const file = mosqueDataPath(active, "culture.json");
+  const items = await readJSON<Array<{ id: string; title: string; time?: string; description?: string; image?: string }>>(file, []);
   return (
     <main className="mx-auto max-w-3xl pb-24">
       <PageHeader title="برنامه فرهنگی" />

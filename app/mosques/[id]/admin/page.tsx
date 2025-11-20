@@ -71,17 +71,21 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const file = formData.get("logoFile") as File | null;
     if (file && typeof file === "object" && "arrayBuffer" in file && (file as any).size > 0) {
       try {
-        const ab = await file.arrayBuffer();
-        const buf = Buffer.from(ab);
-        const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
-        await fs.mkdir(uploadsDir, { recursive: true });
-        const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
-        const filename = `logo-${Date.now()}${ext}`;
-        const dest = path.join(uploadsDir, filename);
-        await fs.writeFile(dest, buf);
-        m.logo = `/uploads/mosques/${id}/${filename}`;
+        const uploadEndpoint = process.env.REMOTE_UPLOAD_ENDPOINT || "https://hooshamoozan.ir/msjed/upload.php";
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch(`${uploadEndpoint}?type=mosques&mosque=${encodeURIComponent(id)}&field=file`, {
+          method: "POST",
+          body: fd,
+        });
+        if (res.ok) {
+          const data = await res.json().catch(() => null as any);
+          if (data && data.ok && data.url) {
+            m.logo = String(data.url);
+          }
+        }
       } catch {
-        // در محیط فقط‌خواندنی مثل Vercel اگر نوشتن روی public/uploads مجاز نباشد، لوگو به‌روز نمی‌شود ولی بقیه تغییرات ذخیره می‌شود.
+        // اگر آپلود لوگو روی هاست موفق نشود، لوگو تغییر نمی‌کند ولی بقیه تغییرات ذخیره می‌شود.
       }
     } else {
       m.logo = String(formData.get("logo") || m.logo);
@@ -139,17 +143,20 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     let imageUrl = "";
     if (file && typeof file === "object" && "arrayBuffer" in file && (file as any).size > 0) {
       try {
-        const ab = await file.arrayBuffer();
-        const buf = Buffer.from(ab);
-        const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
-        await fs.mkdir(uploadsDir, { recursive: true });
-        const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
-        const filename = `culture-${Date.now()}${ext}`;
-        const dest = path.join(uploadsDir, filename);
-        await fs.writeFile(dest, buf);
-        imageUrl = `/uploads/mosques/${id}/${filename}`;
+        const uploadEndpoint = process.env.REMOTE_UPLOAD_ENDPOINT || "https://hooshamoozan.ir/msjed/upload.php";
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch(`${uploadEndpoint}?type=culture&mosque=${encodeURIComponent(id)}&field=file`, {
+          method: "POST",
+          body: fd,
+        });
+        if (res.ok) {
+          const data = await res.json().catch(() => null as any);
+          if (data && data.ok && data.url) {
+            imageUrl = String(data.url);
+          }
+        }
       } catch {
-        // روی Vercel اگر نتواند فایل تصویر را بنویسد، برنامه فرهنگی بدون تصویر ذخیره می‌شود.
         imageUrl = "";
       }
     }
@@ -311,21 +318,24 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const file = formData.get("photo") as File | null;
     if (!file || (file as any).size <= 0) return;
     try {
-      const ab = await file.arrayBuffer();
-      const buf = Buffer.from(ab);
-      const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
-      await fs.mkdir(uploadsDir, { recursive: true });
-      const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
-      const filename = `photo-${Date.now()}${ext}`;
-      const dest = path.join(uploadsDir, filename);
-      await fs.writeFile(dest, buf);
+      const uploadEndpoint = process.env.REMOTE_UPLOAD_ENDPOINT || "https://hooshamoozan.ir/msjed/upload.php";
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`${uploadEndpoint}?type=photos&mosque=${encodeURIComponent(id)}&field=file`, {
+        method: "POST",
+        body: fd,
+      });
+      if (!res.ok) return;
+      const data = await res.json().catch(() => null as any);
+      if (!data || !data.ok || !data.url) return;
+      const url = String(data.url);
       const p = await mosqueDataPath(id, "photos.json");
       const items: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
-      items.unshift({ id: Math.random().toString(36).slice(2, 10), url: `/uploads/mosques/${id}/${filename}`, caption, likes: [] });
+      items.unshift({ id: Math.random().toString(36).slice(2, 10), url, caption, likes: [] });
       await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
       revalidatePath(`/mosques/${id}/admin`);
     } catch {
-      // روی Vercel اگر نتواند عکس را در public/uploads بنویسد، عملیات نادیده گرفته می‌شود تا پنل کرش نکند.
+      // اگر آپلود روی هاست موفق نشود، عکس ثبت نمی‌شود تا پنل کرش نکند.
     }
   };
 

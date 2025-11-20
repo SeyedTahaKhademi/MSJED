@@ -1,6 +1,5 @@
-import fs from "fs/promises";
 import PageHeader from "../components/PageHeader";
-import { readJSON } from "../lib/json";
+import { readJSON, writeJSON } from "../lib/json";
 import { ensureMosqueData, mosqueDataPath } from "../lib/mosque";
 import { getActiveMosqueId, getCurrentUser } from "../lib/auth";
 import SearchBox from "./SearchBox";
@@ -19,9 +18,8 @@ export default async function ExplorePage() {
   const feed: Photo[] = [];
   for (const m of mosques) {
     await ensureMosqueData(m.id);
-    const p = await mosqueDataPath(m.id, "photos.json");
-    const raw = await fs.readFile(p, "utf-8").catch(() => "[]");
-    const arr = JSON.parse(raw || "[]") as Array<Record<string, unknown>>;
+    const p = mosqueDataPath(m.id, "photos.json");
+    const arr = await readJSON<Array<Record<string, unknown>>>(p, []);
     for (const ph of arr) {
       const url = String(ph.url || "");
       const caption = String(ph.caption || "");
@@ -36,9 +34,8 @@ export default async function ExplorePage() {
     "use server";
     const me = await getCurrentUser();
     if (!me) return;
-    const p = await mosqueDataPath(mosqueId, "photos.json");
-    const raw = await fs.readFile(p, "utf-8").catch(() => "[]");
-    const items = JSON.parse(raw || "[]") as Array<Record<string, unknown>>;
+    const p = mosqueDataPath(mosqueId, "photos.json");
+    const items = await readJSON<Array<Record<string, unknown>>>(p, []);
     const photo = items.find((x) => String(x.id ?? "") === photoId) as Record<string, unknown> | undefined;
     if (!photo) return;
     const likes: string[] = Array.isArray(photo.likes) ? (photo.likes as string[]) : [];
@@ -47,7 +44,7 @@ export default async function ExplorePage() {
     } else {
       photo.likes = [...likes, me.id];
     }
-    await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
+    await writeJSON(p, items);
   };
 
   return (

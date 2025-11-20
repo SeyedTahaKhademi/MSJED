@@ -23,7 +23,7 @@ async function joinAction(id: string) {
   m.members = Array.from(new Set([...(m.members || []), me.id]));
   await writeJSON(MOSQUES_PATH, list);
   await setActiveMosque(id);
-  redirect(`/mosques/${id}?message=${encodeURIComponent("عضویت موفق")}`);
+  redirect(`/announcements?message=${encodeURIComponent("عضویت موفق")}`);
 }
 
 async function leaveAction(id: string) {
