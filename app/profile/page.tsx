@@ -28,15 +28,20 @@ export default async function ProfilePage({ searchParams }: { searchParams: Reco
     let logoPath = "";
     const file = formData.get("logoFile") as File | null;
     if (file && typeof file === "object" && "arrayBuffer" in file && (file as any).size > 0) {
-      const ab = await file.arrayBuffer();
-      const buf = Buffer.from(ab);
-      const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
-      await fs.mkdir(uploadsDir, { recursive: true });
-      const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
-      const filename = `logo-${Date.now()}${ext}`;
-      const dest = path.join(uploadsDir, filename);
-      await fs.writeFile(dest, buf);
-      logoPath = `/uploads/mosques/${id}/${filename}`;
+      try {
+        const ab = await file.arrayBuffer();
+        const buf = Buffer.from(ab);
+        const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
+        await fs.mkdir(uploadsDir, { recursive: true });
+        const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
+        const filename = `logo-${Date.now()}${ext}`;
+        const dest = path.join(uploadsDir, filename);
+        await fs.writeFile(dest, buf);
+        logoPath = `/uploads/mosques/${id}/${filename}`;
+      } catch {
+        // روی محیط‌های فقط‌خواندنی (مثل Vercel) اگر نوشتن در public/uploads مجاز نباشد، فقط لوگو تنظیم نمی‌شود.
+        logoPath = "";
+      }
     }
 
     list.unshift({ id, name, address, logo: logoPath, admins: [me.id], members: [me.id] });

@@ -70,15 +70,19 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     m.address = String(formData.get("address") || m.address);
     const file = formData.get("logoFile") as File | null;
     if (file && typeof file === "object" && "arrayBuffer" in file && (file as any).size > 0) {
-      const ab = await file.arrayBuffer();
-      const buf = Buffer.from(ab);
-      const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
-      await fs.mkdir(uploadsDir, { recursive: true });
-      const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
-      const filename = `logo-${Date.now()}${ext}`;
-      const dest = path.join(uploadsDir, filename);
-      await fs.writeFile(dest, buf);
-      m.logo = `/uploads/mosques/${id}/${filename}`;
+      try {
+        const ab = await file.arrayBuffer();
+        const buf = Buffer.from(ab);
+        const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
+        await fs.mkdir(uploadsDir, { recursive: true });
+        const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
+        const filename = `logo-${Date.now()}${ext}`;
+        const dest = path.join(uploadsDir, filename);
+        await fs.writeFile(dest, buf);
+        m.logo = `/uploads/mosques/${id}/${filename}`;
+      } catch {
+        // در محیط فقط‌خواندنی مثل Vercel اگر نوشتن روی public/uploads مجاز نباشد، لوگو به‌روز نمی‌شود ولی بقیه تغییرات ذخیره می‌شود.
+      }
     } else {
       m.logo = String(formData.get("logo") || m.logo);
     }
@@ -134,15 +138,20 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     if (!title) return;
     let imageUrl = "";
     if (file && typeof file === "object" && "arrayBuffer" in file && (file as any).size > 0) {
-      const ab = await file.arrayBuffer();
-      const buf = Buffer.from(ab);
-      const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
-      await fs.mkdir(uploadsDir, { recursive: true });
-      const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
-      const filename = `culture-${Date.now()}${ext}`;
-      const dest = path.join(uploadsDir, filename);
-      await fs.writeFile(dest, buf);
-      imageUrl = `/uploads/mosques/${id}/${filename}`;
+      try {
+        const ab = await file.arrayBuffer();
+        const buf = Buffer.from(ab);
+        const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
+        await fs.mkdir(uploadsDir, { recursive: true });
+        const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
+        const filename = `culture-${Date.now()}${ext}`;
+        const dest = path.join(uploadsDir, filename);
+        await fs.writeFile(dest, buf);
+        imageUrl = `/uploads/mosques/${id}/${filename}`;
+      } catch {
+        // روی Vercel اگر نتواند فایل تصویر را بنویسد، برنامه فرهنگی بدون تصویر ذخیره می‌شود.
+        imageUrl = "";
+      }
     }
     const p = await mosqueDataPath(id, "culture.json");
     const raw = await fs.readFile(p, "utf-8").catch(() => "[]");
@@ -301,19 +310,23 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
     const caption = String(formData.get("caption") || "").trim();
     const file = formData.get("photo") as File | null;
     if (!file || (file as any).size <= 0) return;
-    const ab = await file.arrayBuffer();
-    const buf = Buffer.from(ab);
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
-    await fs.mkdir(uploadsDir, { recursive: true });
-    const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
-    const filename = `photo-${Date.now()}${ext}`;
-    const dest = path.join(uploadsDir, filename);
-    await fs.writeFile(dest, buf);
-    const p = await mosqueDataPath(id, "photos.json");
-    const items: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
-    items.unshift({ id: Math.random().toString(36).slice(2, 10), url: `/uploads/mosques/${id}/${filename}`, caption, likes: [] });
-    await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
-    revalidatePath(`/mosques/${id}/admin`);
+    try {
+      const ab = await file.arrayBuffer();
+      const buf = Buffer.from(ab);
+      const uploadsDir = path.join(process.cwd(), "public", "uploads", "mosques", id);
+      await fs.mkdir(uploadsDir, { recursive: true });
+      const ext = path.extname((file as any).name || "").toLowerCase() || ".jpg";
+      const filename = `photo-${Date.now()}${ext}`;
+      const dest = path.join(uploadsDir, filename);
+      await fs.writeFile(dest, buf);
+      const p = await mosqueDataPath(id, "photos.json");
+      const items: any[] = JSON.parse(await fs.readFile(p, "utf-8").catch(() => "[]") || "[]");
+      items.unshift({ id: Math.random().toString(36).slice(2, 10), url: `/uploads/mosques/${id}/${filename}`, caption, likes: [] });
+      await fs.writeFile(p, JSON.stringify(items, null, 2), "utf-8");
+      revalidatePath(`/mosques/${id}/admin`);
+    } catch {
+      // روی Vercel اگر نتواند عکس را در public/uploads بنویسد، عملیات نادیده گرفته می‌شود تا پنل کرش نکند.
+    }
   };
 
   const removePhoto = async (pid: string) => {
