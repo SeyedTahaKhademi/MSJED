@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { setOnboarded } from "../lib/auth";
 
 export default function OnboardingModal({ showInitially = false }: { showInitially?: boolean }) {
   const [open, setOpen] = useState(showInitially);
@@ -20,9 +19,7 @@ export default function OnboardingModal({ showInitially = false }: { showInitial
         <div className="mt-4 flex flex-wrap gap-2">
           <a href="/profile" className="rounded-lg bg-[color:var(--secondary)] px-4 py-2 text-sm font-medium text-white">ثبت‌نام / ورود</a>
           <a href="/mosques" className="rounded-lg border border-[color:var(--secondary)] px-4 py-2 text-sm text-[color:var(--secondary)]">جست‌وجوی مسجد</a>
-          <form action={setOnboarded}>
-            <button onClick={() => setOpen(false)} className="rounded-lg border border-black/10 px-4 py-2 text-sm">متوجه شدم</button>
-          </form>
+          <button onClick={() => setOpen(false)} className="rounded-lg border border-black/10 px-4 py-2 text-sm">متوجه شدم</button>
         </div>
       </div>
     </div>
