@@ -1,3 +1,5 @@
+import SearchBox from "./explore/SearchBox";
+
 export default function Home() {
   return (
     <main className="mx-auto max-w-3xl pb-24">
@@ -22,16 +24,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Search */}
-      <section className="px-4 pt-4">
-        <div className="rounded-2xl border border-black/5 bg-white p-3 shadow-sm">
-          <div className="flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" className="text-neutral-400" fill="none"><path d="m21 21-4.3-4.3M18 11.5A6.5 6.5 0 1 1 5 5a6.5 6.5 0 0 1 13 6.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
-            <input placeholder="جستجو..." className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400" />
-            <button className="rounded-lg bg-[color:var(--secondary)] px-3 py-1.5 text-xs font-medium text-white">جستجو</button>
-          </div>
-        </div>
-      </section>
+      {/* Global AJAX search (same as Explore) */}
+      <SearchBox />
 
       {/* Categories */}
       <section className="px-4 pt-6">
