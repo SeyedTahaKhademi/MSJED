@@ -71,6 +71,9 @@ export default async function FaqPage() {
     current.unshift({ id, question });
     await fs.writeFile(p, JSON.stringify(current, null, 2), "utf-8");
   };
+
+  const waitingCount = items.filter((it) => !it.answer).length;
+  const answeredCount = items.filter((it) => !!it.answer).length;
   return (
     <main className="mx-auto max-w-3xl pb-24">
       <PageHeader title="سوالات شرعی" />
@@ -87,6 +90,16 @@ export default async function FaqPage() {
             ارسال سوال
           </button>
         </form>
+        {(waitingCount > 0 || answeredCount > 0) && (
+          <div className="mb-4 rounded-2xl border border-[color:var(--secondary)]/20 bg-[color:var(--secondary)]/5 px-4 py-3 text-xs text-neutral-800">
+            {waitingCount > 0 && (
+              <p>شما {waitingCount} سؤال در انتظار پاسخ روحانی دارید.</p>
+            )}
+            {answeredCount > 0 && (
+              <p className="mt-1">برای {answeredCount} سؤال پاسخ ثبت شده است. پایین همین صفحه ببینید.</p>
+            )}
+          </div>
+        )}
         {items.length === 0 ? (
           <p className="text-neutral-600">سوالی ثبت نشده است.</p>
         ) : (

@@ -487,7 +487,7 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
             {canManageCulture && (
           <div className="mt-6 rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
             <h3 className="text-sm font-semibold text-neutral-900">برنامه‌های فرهنگی</h3>
-            <form action={addCulture} className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-5" encType="multipart/form-data">
+            <form action={addCulture} className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-5">
               <input name="title" required placeholder="عنوان" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)]" />
               <input name="time" placeholder="زمان" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)]" />
               <input name="description" placeholder="توضیحات" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)] sm:col-span-2" />
@@ -613,7 +613,7 @@ export default async function MosqueAdminPage({ params }: { params: Promise<{ id
         {isAdmin && (
           <div className="mt-6 rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
             <h3 className="text-sm font-semibold text-neutral-900">عکس‌ها (اکسپلور)</h3>
-            <form action={addPhoto} className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3" encType="multipart/form-data">
+            <form action={addPhoto} className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
               <input name="photo" type="file" accept="image/*" required className="rounded-lg border border-black/10 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-black/5 file:px-3 file:py-1.5 file:text-xs" />
               <input name="caption" placeholder="کپشن (اختیاری)" className="rounded-lg border border-black/10 px-3 py-2 text-sm outline-none focus:border-[color:var(--secondary)] sm:col-span-1" />
               <button className="rounded-lg bg-[color:var(--secondary)] px-4 py-2 text-sm font-medium text-white">افزودن</button>
